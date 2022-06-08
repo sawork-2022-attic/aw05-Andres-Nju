@@ -6,6 +6,7 @@ import com.micropos.product.mapper.ProductMapper;
 import com.micropos.product.service.ProductService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -13,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestController
-@RequestMapping("api")
+@RequestMapping("/products")
 public class ProductController implements ProductsApi {
 
     private final ProductMapper productMapper;
@@ -27,6 +28,7 @@ public class ProductController implements ProductsApi {
     }
 
     @Override
+    @GetMapping()
     public ResponseEntity<List<ProductDto>> listProducts(){
         List<ProductDto> products = new ArrayList<>(productMapper.toProductsDto(this.productService.products()));
         if (products.isEmpty()) {
@@ -36,6 +38,7 @@ public class ProductController implements ProductsApi {
     }
 
     @Override
+    @GetMapping(value = "{productId}")
     public ResponseEntity<ProductDto> showProductById(String productId) {
         ProductDto product = productMapper.toProductDto(this.productService.getProduct(productId));
         if (product == null) {

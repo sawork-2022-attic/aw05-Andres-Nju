@@ -3,6 +3,8 @@ package com.micropos.cart.model;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -42,4 +44,8 @@ public class Item implements Serializable {
     @Getter
     @Setter
     private int quantity;
+
+    public String getProductId(){
+        return productId;
+    }
 }

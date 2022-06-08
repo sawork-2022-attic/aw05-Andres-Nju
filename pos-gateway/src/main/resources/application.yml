@@ -9,17 +9,9 @@ spring:
         - id: products
           uri: lb://pos-products
           predicates:
-            - Path=/api/products/**
+            - Path=/products/**
         - id: carts
           uri: lb://pos-carts
           predicates:
-            - Path=/api/carts/**
-        - id: counter
-          uri: lb://pos-counter
-          predicates:
-            - Path=/api/counter/**
+            - Path=/carts/**
 
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: http://localhost:8761/eureka/

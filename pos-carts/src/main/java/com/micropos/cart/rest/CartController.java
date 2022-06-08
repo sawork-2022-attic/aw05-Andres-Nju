@@ -1,64 +1,102 @@
 package com.micropos.cart.rest;
 
+import com.micropos.api.ApiUtil;
 import com.micropos.api.CartsApi;
 import com.micropos.cart.model.Cart;
 import com.micropos.cart.model.Item;
+import com.micropos.cart.mapper.CartMapper;
 import com.micropos.cart.service.CartService;
 import com.micropos.dto.CartDto;
 import com.micropos.dto.CartItemDto;
+import com.micropos.dto.ProductDto;
+import org.hibernate.criterion.Order;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
+
+
 @RestController
+@RequestMapping("/carts")
+@EnableDiscoveryClient
 public class CartController implements CartsApi {
 
-    private CartService cartService;
+    private final CartService cartService;
+    private final CartMapper cartMapper;
 
-    @Autowired
-    public void setCartService(CartService cartService) {
+    public CartController(CartService cartService, CartMapper cartMapper) {
+        this.cartMapper = cartMapper;
         this.cartService = cartService;
     }
 
     @Override
-    public ResponseEntity<CartDto> addItemToCart(Integer cartId, CartItemDto cartItemDto) {
-        return CartsApi.super.addItemToCart(cartId, cartItemDto);
+    @PostMapping("/{cartId}")
+    public ResponseEntity<CartDto> addItemToCart(@PathVariable("cartId") Integer cartId, @RequestBody CartItemDto cartItemDto) {
+        Cart cart = cartService.getCart(cartId);
+        if(cart == null)
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        CartDto cartDto = cartMapper.toCartDto(cart);
+        Item item = cartMapper.toItem(cartItemDto, cartDto);
+        System.out.println(item);
+        Cart ret = cartService.add(cart, item);
+        if(ret == null)
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        cartDto.addItemsItem(cartItemDto);
+        return new ResponseEntity<>(cartDto, HttpStatus.OK);
     }
 
     @Override
-    public ResponseEntity<CartDto> createCart(CartDto cartDto) {
-        return CartsApi.super.createCart(cartDto);
+    @PostMapping()
+    public ResponseEntity<CartDto> createCart(@RequestBody CartDto cartDto) {
+        Cart cart = cartMapper.toCart(cartDto);
+        if(cart == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        cart = cartService.addCart(cart);
+        if (cart == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(cartMapper.toCartDto(cart),HttpStatus.OK);
     }
 
     @Override
+    @GetMapping()
     public ResponseEntity<List<CartDto>> listCarts() {
-        return CartsApi.super.listCarts();
+        List<CartDto> carts = new ArrayList<>(cartMapper.toCartDtos(this.cartService.getAllCarts()));
+        if (carts.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(carts, HttpStatus.OK);
     }
 
     @Override
-    public ResponseEntity<CartDto> showCartById(Integer cartId) {
-        return CartsApi.super.showCartById(cartId);
+    @GetMapping("/{cartId}")
+    public ResponseEntity<CartDto> showCartById(@PathVariable("cartId") Integer cartId) {
+        Cart cart = cartService.getCart(cartId);
+        if(cart == null)
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        CartDto cartDto = cartMapper.toCartDto(cart);
+        return new ResponseEntity<>(cartDto, HttpStatus.OK);
     }
 
     @Override
-    public ResponseEntity<Double> showCartTotal(Integer cartId) {
+    @GetMapping("/{cartId}/total")
+    public ResponseEntity<Double> showCartTotal(@PathVariable("cartId") Integer cartId) {
 
-//        Cart cart = new Cart();
-//        Item item1 = new Item();
-//        item1.productId("a").productName("abc").unitPrice(2).quantity(2);
-//        cart.addItem(item1);
-//        Item item2 = new Item();
-//        item2.productId("b").productName("bcd").unitPrice(3.1).quantity(1);
-//        cart.addItem(item2);
-//        Double total = cartService.checkout(cart);
-
-        Double total = cartService.checkout(cartId);
+        Double total = cartService.checkTotal(cartId);
 
         if (total == -1d) {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(total);
     }
+
+
+
 }

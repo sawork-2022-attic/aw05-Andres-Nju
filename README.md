@@ -24,22 +24,18 @@ gateway: 8084
         - id: products
           uri: lb://pos-products
           predicates:
-            - Path=/api/products/**
+            - Path=/products/**
         - id: carts
           uri: lb://pos-carts
           predicates:
-            - Path=/api/carts/**
-        - id: counter
-          uri: lb://pos-counter
-          predicates:
-            - Path=/api/counter/**
+            - Path=/carts/**
 ```
 
 运行它们并在浏览器上访问localhost:8761端口：
 
 ![1](ref/1.png)
 
-使用postman GEThttp://localhost:8084/api/products，获取所有的产品信息
+使用postman GEThttp://localhost:8084/products，获取所有的产品信息
 
 ![2](ref/2.png)
 
@@ -52,27 +48,20 @@ gateway: 8084
       operationId: listProducts
 ```
 
-GEThttp://localhost:8084/api/products/{productId}，获取对应id的product信息：
+GEThttp://localhost:8084/products/{productId}，获取对应id的product信息：
 
 ![3](ref/3.png)
 
-对应`pos-api.yaml`文件中定义的接口showProductById(在ProductController中自己实现)
+POST http://localhost:8084/carts 生成一个新的购物车（需要一个requestBody以json格式填写cartDTO信息，id从0开始自动增加，items默认为0
 
-```yaml
-/products/{productId}:
-    get:
-      summary: Info for a specific product
-      operationId: showProductById
-```
+GET http://localhost:8084/carts 获取所有购物车信息
 
-```java
-	@Override
-    public ResponseEntity<ProductDto> showProductById(String productId) {
-        ProductDto product = productMapper.toProductDto(this.productService.getProduct(productId));
-        if (product == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<>(product, HttpStatus.OK);
-    }
-```
+![4](ref/4.png)
 
+尝试向id = 2的购物车中添加一个新的item（两次，观察到返回过来的body中amount = 2）：
+
+![1](ref/5.png)
+
+Get /carts/2/total命令获取总价格为149 x 2 = 298：
+
+![2](ref/6.png)

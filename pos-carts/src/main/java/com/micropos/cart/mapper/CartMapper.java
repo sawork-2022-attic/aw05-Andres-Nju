@@ -69,6 +69,15 @@ public interface CartMapper {
                 .unitPrice(itemDto.getProduct().getPrice());
     }
 
+    default Item toItem(CartItemDto itemDto, Integer cartId) {
+        return new Item().id(itemDto.getId())
+                .cartId(cartId)
+                .productId(itemDto.getProduct().getId())
+                .productName(itemDto.getProduct().getName())
+                .quantity(itemDto.getAmount())
+                .unitPrice(itemDto.getProduct().getPrice());
+    }
+
     default ProductDto getProductDto(Item item) {
         return new ProductDto().id(item.productId())
                 .name(item.productName())
